@@ -1,0 +1,26 @@
+{
+  "name": "@movebox/game",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite --config vite.config.mjs",
+    "build": "vite build --config vite.config.mjs",
+    "test": "jest --config ../../jest.config.cjs --selectProjects game --runInBand",
+    "lint": "standard src tests"
+  },
+  "dependencies": {
+    "@movebox/main": "1.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.3.0",
+    "@testing-library/react": "^16.3.2",
+    "standard": "^17.1.2",
+    "vite": "^8.3.8"
+  },
+  "standard": {
+    "env": ["jest", "browser"]
+  }
+}
