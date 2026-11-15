@@ -16,6 +16,10 @@ npm run build
 
 O servidor de desenvolvimento abre em `http://localhost:9002`. O build estático é gerado em `dist/`; `vercel.json` configura essa saída para publicação na Vercel.
 
+## Google Tag Manager
+
+Copie `projects/game/.env.example` para `projects/game/.env` para ativar o GTM localmente. No provedor de deploy, configure `VITE_GTM_ID=GTM-KMTQTFL` antes do build para cada ambiente desejado. O identificador é público e é incluído no HTML. Sem a variável, o jogo funciona, mas o GTM fica desativado e o build exibe um aviso.
+
 ## Como jogar
 
 Use as setas, WASD ou os botões direcionais. Empurre uma caixa de cada vez para um espaço livre; não é possível puxá-la. Use Desfazer ou Ctrl+Z para voltar um movimento, e Reiniciar para recomeçar. Ao preencher todos os objetivos, a fase termina. A seleção permite jogar qualquer fase disponível.

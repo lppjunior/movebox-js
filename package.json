@@ -9,7 +9,7 @@
   "scripts": {
     "start": "npm run start --workspace @movebox/game",
     "build": "npm run build --workspace @movebox/game",
-    "test": "jest --config jest.config.cjs --runInBand",
+    "test": "jest --config jest.config.cjs --runInBand && npm run test:gtm --workspace @movebox/game",
     "lint": "npm run lint --workspaces --if-present"
   },
   "engines": {
