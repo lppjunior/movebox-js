@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createGame, createState, levels } from '@movebox/main'
 
-const storageKey = 'movebox.records.v1'
+const storageKey = 'movebox.records.v2'
+const legacyStorageKey = 'movebox.records.v1'
 const availability = levels.map(rows => {
   try {
     createState(rows)
@@ -15,17 +16,26 @@ const formatTime = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0
 
 function readRecords () {
   try {
-    const stored = window.localStorage.getItem(storageKey)
-    if (!stored) return { records: {}, error: '' }
+    const current = window.localStorage.getItem(storageKey)
+    const legacy = current === null ? window.localStorage.getItem(legacyStorageKey) : null
+    const stored = current ?? legacy
+    if (stored === null) return { records: {}, error: '' }
     const data = JSON.parse(stored)
+    const migrating = current === null && legacy !== null
     if (!data || typeof data !== 'object' || Array.isArray(data) ||
-      Object.entries(data).some(([level, value]) => !Number.isInteger(Number(level)) || Number(level) < 0 ||
-        Number(level) >= levels.length || !value || !Number.isInteger(value.wins) || value.wins < 1 ||
+      Object.entries(data).some(([level, value]) => !/^(0|[1-9]\d*)$/.test(level) ||
+        Number(level) >= levels.length + (migrating ? 1 : 0) || !value || !Number.isInteger(value.wins) || value.wins < 1 ||
         !Number.isInteger(value.bestTime) || value.bestTime < 0 ||
         !Number.isInteger(value.bestMoves) || value.bestMoves < 0)) {
       throw new Error('Dados de estatísticas inválidos.')
     }
-    return { records: data, error: '' }
+    if (migrating && Object.hasOwn(data, '71')) {
+      throw new Error('Existe um recorde para a antiga fase 72, que estava vazia. Os dados originais foram preservados.')
+    }
+    const records = migrating
+      ? Object.fromEntries(Object.entries(data).map(([level, value]) => [Number(level) > 71 ? Number(level) - 1 : Number(level), value]))
+      : data
+    return { records, error: '', migrating }
   } catch (error) {
     return { records: {}, error: `Não foi possível carregar as estatísticas: ${error.message}` }
   }
@@ -47,6 +57,15 @@ export default function App () {
   const startTime = useRef(null)
   const saved = useRef(false)
   const completed = Object.keys(records).filter(index => !availability[Number(index)]).length
+
+  useEffect(() => {
+    if (!stored.migrating) return
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(stored.records))
+    } catch (error) {
+      setError(`Não foi possível migrar as estatísticas: ${error.message}`)
+    }
+  }, [stored])
 
   function start (index) {
     if (availability[index]) return
@@ -80,13 +99,14 @@ export default function App () {
       }
       setRecords(updated)
       try {
+        if (stored.error) throw new Error('Os dados existentes não puderam ser carregados e foram preservados.')
         window.localStorage.setItem(storageKey, JSON.stringify(updated))
         setError('')
       } catch (error) {
         setError(`Não foi possível salvar as estatísticas: ${error.message}`)
       }
     }
-  }, [game, level, records])
+  }, [game, level, records, stored.error])
 
   useEffect(() => {
     if (screen !== 'game' || !state || state.won) return
@@ -147,7 +167,7 @@ export default function App () {
             })}
           </div>
           <div className='pagination'><button disabled={page === 0} onClick={() => setPage(page - 1)}>← Anterior</button><span>{page + 1} / {Math.ceil(levels.length / 35)}</span><button disabled={(page + 1) * 35 >= levels.length} onClick={() => setPage(page + 1)}>Próxima →</button></div>
-          <p className='help'>Fases 52 e 72 indisponíveis: os dados originais não permitem jogar. Todas as demais estão acessíveis.</p>
+          {playable < levels.length && <p className='help'>Algumas fases estão indisponíveis devido a dados inválidos.</p>}
         </section>
       )}
       {screen === 'stats' && (
