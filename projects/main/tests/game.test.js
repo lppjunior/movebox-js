@@ -2,15 +2,24 @@ import { createGame, createState, levels, step } from '../src/index.js'
 
 const board = ['#####', '#&@+#', '#####']
 
-test('preserves the original levels and reports malformed boards', () => {
-  expect(levels).toHaveLength(105)
+test('makes every level structurally playable and reports malformed boards', () => {
+  expect(levels).toHaveLength(104)
   const invalid = levels.map((rows, index) => {
     try { createState(rows); return null } catch (error) { return index + 1 }
   }).filter(Boolean)
-  expect(invalid).toEqual([52, 72])
+  expect(invalid).toEqual([])
   expect(createState(['####', '#&+#', '#@#', '####']).width).toBe(4)
   expect(() => createState(['#?&+#'])).toThrow('Casa desconhecida')
   expect(() => createState(['&&@+'])).toThrow('mais de um jogador')
+})
+
+test('corrects the affected boxes, goals and wall', () => {
+  for (const index of [27, 51]) {
+    const state = createState(levels[index])
+    expect(state.boxes).toHaveLength(state.targets.length)
+  }
+  const state = createState(levels[99])
+  expect(step({ ...state, player: '7,4' }, 'right')).toBeNull()
 })
 
 test('moves, pushes, wins, undoes and restarts while notifying listeners', () => {
