@@ -1,0 +1,20 @@
+{
+  "name": "@movebox/bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest --config ../../jest.config.cjs --selectProjects bot --runInBand",
+    "lint": "standard src tests"
+  },
+  "dependencies": {
+    "@movebox/main": "1.0.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2"
+  },
+  "standard": {
+    "env": ["jest"]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "movebox",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "projects/*"
+  ],
+  "scripts": {
+    "start": "npm run start --workspace @movebox/game",
+    "build": "npm run build --workspace @movebox/game",
+    "test": "jest --config jest.config.cjs --runInBand && npm run test:gtm --workspace @movebox/game",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": "26.x",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.13",
+    "@babel/preset-env": "^7.29.14",
+    "@babel/preset-react": "^7.28.5",
+    "babel-jest": "^30.5.2",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2"
+  }
+}

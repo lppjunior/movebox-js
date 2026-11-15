@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 68" role="img" aria-label="Movebox">
+  <rect x="0" y="0" width="30" height="30" rx="3"/>
+  <rect x="38" y="0" width="30" height="30" rx="3"/>
+  <rect x="0" y="38" width="30" height="30" rx="3"/>
+  <path fill-rule="evenodd" d="M38 38h30v30H38zm10 10v10h10V48z"/>
+  <text x="88" y="53" font-family="Space Grotesk, sans-serif" font-size="51" font-weight="700" letter-spacing="-2">Movebox</text>
+</svg>
