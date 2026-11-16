@@ -221,7 +221,7 @@ export default function App () {
           </section>
         </>
       )}
-      {screen !== 'game' && <footer>Luiz Paulo · Movebox</footer>}
+      <footer className='app-footer'>lppjunior.com · Movebox</footer>
     </main>
   )
 }
