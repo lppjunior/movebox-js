@@ -13,9 +13,9 @@ const playFirstLevel = () => {
 
 test('shows the footer in the menu and during gameplay', () => {
   render(<App />)
-  expect(screen.getByText('lppjunior.com · Movebox')).toBeTruthy()
+  expect(screen.getByText('lppjunior.com')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: /JOGAR AGORA/ }))
-  expect(screen.getByText('lppjunior.com · Movebox')).toBeTruthy()
+  expect(screen.getByText('lppjunior.com')).toBeTruthy()
 })
 
 test('completes a real level and persists progress across reloads', () => {

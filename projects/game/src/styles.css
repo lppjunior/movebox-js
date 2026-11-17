@@ -65,3 +65,10 @@ h2{font-size:17px;margin-top:30px}
 .victory strong{color:#63e79a}
 .victory button{font-size:11px}
 @media(max-width:600px){.card{padding:28px 20px}.game-header{gap:8px;justify-content:space-between}.game-header button{padding:8px}.game-header button span{display:none}.game-header small{font-size:8px}.game-header strong{font-size:12px}.level-grid{gap:5px}.board{--size:max(14px,min(38px,calc((100vw - 32px)/var(--columns)),calc((100vh - 280px)/var(--rows))))}.records div{font-size:10px}}
+
+.app-footer a {
+  display: inline-block;
+  padding: 4px 2px;
+  color: inherit;
+  pointer-events: auto;
+}

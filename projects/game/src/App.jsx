@@ -221,7 +221,7 @@ export default function App () {
           </section>
         </>
       )}
-      <footer className='app-footer'>lppjunior.com · Movebox</footer>
+      <footer className='app-footer'><a href='https://lppjunior.com/'>lppjunior.com</a> · Movebox</footer>
     </main>
   )
 }
