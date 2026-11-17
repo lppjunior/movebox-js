@@ -2,7 +2,10 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import App from '../src/App.jsx'
 
-beforeEach(() => window.localStorage.clear())
+beforeEach(() => {
+  window.localStorage.clear()
+  window.history.pushState(null, '', '/pt/')
+})
 
 const playFirstLevel = () => {
   fireEvent.click(screen.getByRole('button', { name: /JOGAR AGORA/ }))
@@ -117,4 +120,16 @@ test('reports malformed stored statistics', () => {
   window.localStorage.setItem('movebox.records.v2', '')
   render(<App />)
   expect(screen.getByRole('alert').textContent).toContain('Não foi possível carregar')
+})
+
+test('switches the language, URL and document metadata', () => {
+  window.history.pushState(null, '', '/')
+  render(<App />)
+  expect(screen.getByRole('button', { name: /PLAY NOW/ })).toBeTruthy()
+  expect(document.documentElement.lang).toBe('en')
+  fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'ar' } })
+  expect(window.location.pathname).toBe('/ar/')
+  expect(document.documentElement.dir).toBe('rtl')
+  expect(window.localStorage.getItem('movebox.language.v1')).toBe('ar')
+  expect(screen.getByRole('button', { name: /العب الآن/ })).toBeTruthy()
 })

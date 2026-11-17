@@ -7,8 +7,8 @@
     "start": "vite --config vite.config.mjs",
     "build": "vite build --config vite.config.mjs",
     "test": "jest --config ../../jest.config.cjs --selectProjects game --runInBand",
-    "test:gtm": "node --test tests/gtm.test.mjs",
-    "lint": "standard src tests tests/gtm.test.mjs vite.config.mjs"
+    "test:gtm": "node --test tests/*.test.mjs",
+    "lint": "standard src tests tests/*.test.mjs vite.config.mjs"
   },
   "dependencies": {
     "@movebox/main": "1.0.0",

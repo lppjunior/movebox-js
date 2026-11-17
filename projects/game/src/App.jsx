@@ -1,5 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createGame, createState, levels } from '@movebox/main'
+import {
+  LANGUAGES,
+  LANGUAGE_NAMES,
+  HTML_LANG,
+  LANGUAGE_PATHS,
+  RTL_LANGUAGES,
+  MESSAGES,
+  languageFromPath,
+  storeLanguage
+} from './i18n.mjs'
 
 const storageKey = 'movebox.records.v2'
 const legacyStorageKey = 'movebox.records.v1'
@@ -14,7 +24,7 @@ const availability = levels.map(rows => {
 const playable = availability.filter(error => !error).length
 const formatTime = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 
-function readRecords () {
+function readRecords (t) {
   try {
     const current = window.localStorage.getItem(storageKey)
     const legacy = current === null ? window.localStorage.getItem(legacyStorageKey) : null
@@ -27,22 +37,39 @@ function readRecords () {
         Number(level) >= levels.length + (migrating ? 1 : 0) || !value || !Number.isInteger(value.wins) || value.wins < 1 ||
         !Number.isInteger(value.bestTime) || value.bestTime < 0 ||
         !Number.isInteger(value.bestMoves) || value.bestMoves < 0)) {
-      throw new Error('Dados de estatísticas inválidos.')
+      throw new Error(t.errInvalid)
     }
     if (migrating && Object.hasOwn(data, '71')) {
-      throw new Error('Existe um recorde para a antiga fase 72, que estava vazia. Os dados originais foram preservados.')
+      throw new Error(t.errLegacy)
     }
     const records = migrating
       ? Object.fromEntries(Object.entries(data).map(([level, value]) => [Number(level) > 71 ? Number(level) - 1 : Number(level), value]))
       : data
     return { records, error: '', migrating }
   } catch (error) {
-    return { records: {}, error: `Não foi possível carregar as estatísticas: ${error.message}` }
+    return { records: {}, error: t.loadFail(error.message) }
   }
 }
 
-export default function App () {
-  const [stored] = useState(readRecords)
+function LanguageSwitcher ({ lang, onChange, t }) {
+  return (
+    <select
+      aria-label={t.language}
+      className='language-switcher'
+      onChange={event => onChange(event.target.value)}
+      value={lang}
+    >
+      {LANGUAGES.map(code => (
+        <option key={code} lang={code} value={code}>
+          {LANGUAGE_NAMES[code]}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+function App ({ lang, onLanguageChange, t }) {
+  const [stored] = useState(() => readRecords(t))
   const [records, setRecords] = useState(stored.records)
   const [error, setError] = useState(stored.error)
   const [screen, setScreen] = useState('menu')
@@ -63,7 +90,7 @@ export default function App () {
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(stored.records))
     } catch (error) {
-      setError(`Não foi possível migrar as estatísticas: ${error.message}`)
+      setError(t.migrateFail(error.message))
     }
   }, [stored])
 
@@ -99,14 +126,14 @@ export default function App () {
       }
       setRecords(updated)
       try {
-        if (stored.error) throw new Error('Os dados existentes não puderam ser carregados e foram preservados.')
+        if (stored.error) throw new Error(t.preserved)
         window.localStorage.setItem(storageKey, JSON.stringify(updated))
         setError('')
       } catch (error) {
-        setError(`Não foi possível salvar as estatísticas: ${error.message}`)
+        setError(t.saveFail(error.message))
       }
     }
-  }, [game, level, records, stored.error])
+  }, [game, level, records, stored.error, t])
 
   useEffect(() => {
     if (screen !== 'game' || !state || state.won) return
@@ -142,64 +169,66 @@ export default function App () {
       {error && <div className='notice' role='alert'>{error}</div>}
       {screen === 'menu' && (
         <section className='card menu'>
+          <div className='menu-top'><LanguageSwitcher lang={lang} onChange={onLanguageChange} t={t} /></div>
           <div className='brand'><img src='/logo.svg' alt='Movebox' width='220' height='48' fetchPriority='high' /></div>
-          <p className='eyebrow centered'>CLÁSSICO SOKOBAN</p>
-          <div className='progress-label'><span>Fases concluídas</span><strong>{completed} / {playable}</strong></div>
+          <p className='eyebrow centered'>{t.eyebrow}</p>
+          <div className='progress-label'><span>{t.levelsDone}</span><strong>{completed} / {playable}</strong></div>
           <div className='progress'><span style={{ width: `${completed / playable * 100}%` }} /></div>
-          <button className='primary full' onClick={() => start(level)}>▶ &nbsp; JOGAR AGORA</button>
+          <button className='primary full' onClick={() => start(level)}>▶ &nbsp; {t.play}</button>
           <div className='menu-grid'>
-            <button onClick={() => setScreen('levels')}><strong>FASES</strong><small>{levels.length} níveis</small></button>
-            <button onClick={() => setScreen('stats')}><strong>ESTATÍSTICAS</strong><small>&amp; Recordes</small></button>
+            <button onClick={() => setScreen('levels')}><strong>{t.levelsBtn}</strong><small>{t.levelsCount(levels.length)}</small></button>
+            <button onClick={() => setScreen('stats')}><strong>{t.statsBtn}</strong><small>{t.statsSub}</small></button>
           </div>
-          <p className='help'>Use as setas ou WASD para mover. Empurre as caixas até os objetivos.</p>
+          <p className='help'>{t.menuHelp}</p>
         </section>
       )}
       {screen === 'levels' && (
         <section className='card panel'>
-          <button className='back' onClick={() => setScreen('menu')}>← MENU</button>
-          <p className='eyebrow'>ESCOLHA SEU DESAFIO</p>
-          <h1>Seleção de fases</h1>
-          <p className='muted'>{completed} de {playable} fases concluídas</p>
+          <button className='back' onClick={() => setScreen('menu')}>{t.back}</button>
+          <p className='eyebrow'>{t.challenge}</p>
+          <h1>{t.levelSelect}</h1>
+          <p className='muted'>{t.completedOf(completed, playable)}</p>
           <div className='level-grid'>
             {levels.slice(page * 35, page * 35 + 35).map((rows, offset) => {
               const index = page * 35 + offset
-              return <button key={index} disabled={!!availability[index]} title={availability[index] || `Jogar fase ${index + 1}`} className={records[index] ? 'completed' : ''} onClick={() => start(index)}>{index + 1}{records[index] && <span>✓</span>}</button>
+              return <button key={index} disabled={!!availability[index]} title={availability[index] || t.playLevel(index + 1)} className={records[index] ? 'completed' : ''} onClick={() => start(index)}>{index + 1}{records[index] && <span>✓</span>}</button>
             })}
           </div>
-          <div className='pagination'><button disabled={page === 0} onClick={() => setPage(page - 1)}>← Anterior</button><span>{page + 1} / {Math.ceil(levels.length / 35)}</span><button disabled={(page + 1) * 35 >= levels.length} onClick={() => setPage(page + 1)}>Próxima →</button></div>
-          {playable < levels.length && <p className='help'>Algumas fases estão indisponíveis devido a dados inválidos.</p>}
+          <div className='pagination'><button disabled={page === 0} onClick={() => setPage(page - 1)}>{t.prev}</button><span>{page + 1} / {Math.ceil(levels.length / 35)}</span><button disabled={(page + 1) * 35 >= levels.length} onClick={() => setPage(page + 1)}>{t.next}</button></div>
+          {playable < levels.length && <p className='help'>{t.unavailable}</p>}
         </section>
       )}
       {screen === 'stats' && (
         <section className='card panel'>
-          <button className='back' onClick={() => setScreen('menu')}>← MENU</button>
-          <p className='eyebrow'>SEU PROGRESSO</p>
-          <h1>Estatísticas</h1>
-          <div className='stats-grid'><div><strong>{completed}</strong><small>FASES CONCLUÍDAS</small></div><div><strong>{Object.values(records).reduce((sum, record) => sum + record.wins, 0)}</strong><small>VITÓRIAS</small></div></div>
-          <h2>Seus recordes</h2>
+          <button className='back' onClick={() => setScreen('menu')}>{t.back}</button>
+          <p className='eyebrow'>{t.progress}</p>
+          <h1>{t.statsTitle}</h1>
+          <div className='stats-grid'><div><strong>{completed}</strong><small>{t.levelsDoneUpper}</small></div><div><strong>{Object.values(records).reduce((sum, record) => sum + record.wins, 0)}</strong><small>{t.winsUpper}</small></div></div>
+          <h2>{t.yourRecords}</h2>
           {completed === 0
-            ? <p className='muted'>Conclua uma fase para registrar seus recordes.</p>
+            ? <p className='muted'>{t.noRecords}</p>
             : (
-              <div className='records'>{Object.entries(records).sort(([a], [b]) => Number(a) - Number(b)).map(([index, record]) => <div key={index}><strong>Fase {Number(index) + 1}</strong><span>{record.bestMoves} movimentos</span><span>{formatTime(record.bestTime)}</span></div>)}</div>
+              <div className='records'>{Object.entries(records).sort(([a], [b]) => Number(a) - Number(b)).map(([index, record]) => <div key={index}><strong>{t.levelN(Number(index) + 1)}</strong><span>{t.movesN(record.bestMoves)}</span><span>{formatTime(record.bestTime)}</span></div>)}</div>
               )}
-          <p className='help'>Os dados ficam apenas neste navegador.</p>
+          <p className='help'>{t.localData}</p>
         </section>
       )}
       {screen === 'game' && state && (
         <>
           <header className='game-header'>
-            <button onClick={() => setScreen('menu')}>← MENU</button>
-            <div><small>FASE</small><strong>{level + 1} / {levels.length}</strong></div>
-            <div><small>MOVIMENTOS</small><strong>{state.moves}</strong></div>
-            <div><small>EMPURRÕES</small><strong>{state.pushes}</strong></div>
-            <div><small>TEMPO</small><strong>{formatTime(seconds)}</strong></div>
-            <button aria-label='Desfazer' onClick={() => { if (game.undo()) setState(game.getState()) }}>↶ <span>DESFAZER</span></button>
-            <button aria-label='Reiniciar' onClick={() => start(level)}>↻ <span>REINICIAR</span></button>
+            <button onClick={() => setScreen('menu')}>{t.back}</button>
+            <div><small>{t.hLevel}</small><strong>{level + 1} / {levels.length}</strong></div>
+            <div><small>{t.hMoves}</small><strong>{state.moves}</strong></div>
+            <div><small>{t.hPushes}</small><strong>{state.pushes}</strong></div>
+            <div><small>{t.hTime}</small><strong>{formatTime(seconds)}</strong></div>
+            <button aria-label={t.undo} onClick={() => { if (game.undo()) setState(game.getState()) }}>↶ <span>{t.undoUpper}</span></button>
+            <button aria-label={t.restart} onClick={() => start(level)}>↻ <span>{t.restartUpper}</span></button>
+            <LanguageSwitcher lang={lang} onChange={onLanguageChange} t={t} />
           </header>
           <section className='game-content'>
-            {state.won && <div className='victory' role='status'><strong>FASE CONCLUÍDA!</strong><span>Excelente trabalho.</span>{nextLevel !== -1 && <button className='primary' onClick={() => start(nextLevel)}>PRÓXIMA FASE →</button>}<button onClick={() => setScreen('levels')}>ESCOLHER FASE</button></div>}
+            {state.won && <div className='victory' role='status'><strong>{t.done}</strong><span>{t.great}</span>{nextLevel !== -1 && <button className='primary' onClick={() => start(nextLevel)}>{t.nextLevel}</button>}<button onClick={() => setScreen('levels')}>{t.chooseLevel}</button></div>}
             <div className='board-wrap'>
-              <div className='board' role='img' aria-label={`Fase ${level + 1}: ${state.moves} movimentos e ${state.pushes} empurrões`} style={{ '--columns': state.width, '--rows': state.height }}>
+              <div className='board' role='img' aria-label={t.boardLabel(level + 1, state.moves, state.pushes)} style={{ '--columns': state.width, '--rows': state.height }}>
                 {Array.from({ length: state.height }, (_, y) => Array.from({ length: state.width }, (_, x) => {
                   const position = `${x},${y}`
                   const tile = levels[level][y][x]
@@ -211,17 +240,44 @@ export default function App () {
                 }))}
               </div>
             </div>
-            <div className='controls' aria-label='Controles de movimento'>
-              <button className='up' aria-label='Mover para cima' onClick={() => move('up')}>↑</button>
-              <button className='left' aria-label='Mover para a esquerda' onClick={() => move('left')}>←</button>
-              <button className='down' aria-label='Mover para baixo' onClick={() => move('down')}>↓</button>
-              <button className='right' aria-label='Mover para a direita' onClick={() => move('right')}>→</button>
+            <div className='controls' aria-label={t.controls}>
+              <button className='up' aria-label={t.up} onClick={() => move('up')}>↑</button>
+              <button className='left' aria-label={t.left} onClick={() => move('left')}>←</button>
+              <button className='down' aria-label={t.down} onClick={() => move('down')}>↓</button>
+              <button className='right' aria-label={t.right} onClick={() => move('right')}>→</button>
             </div>
-            <p className='help centered'>SETAS / WASD para mover &nbsp;·&nbsp; CTRL + Z para desfazer</p>
+            <p className='help centered'>{t.keysHelp}</p>
           </section>
         </>
       )}
       <footer className='app-footer'><a href='https://lppjunior.com/'>lppjunior.com</a> · Movebox</footer>
     </main>
   )
+}
+
+export default function AppWithLanguage () {
+  const [lang, setLang] = useState(() => languageFromPath(window.location.pathname))
+  const t = MESSAGES[lang]
+
+  useEffect(() => {
+    document.documentElement.lang = HTML_LANG[lang]
+    document.documentElement.dir = RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr'
+    document.title = t.title
+  }, [lang, t])
+
+  useEffect(() => {
+    const syncLanguage = () => setLang(languageFromPath(window.location.pathname))
+    window.addEventListener('popstate', syncLanguage)
+
+    return () => window.removeEventListener('popstate', syncLanguage)
+  }, [])
+
+  function changeLanguage (next) {
+    if (next === lang) return
+    storeLanguage(window.localStorage, next)
+    window.history.pushState(null, '', LANGUAGE_PATHS[next])
+    setLang(next)
+  }
+
+  return <App lang={lang} onLanguageChange={changeLanguage} t={t} />
 }
