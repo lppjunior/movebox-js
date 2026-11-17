@@ -22,7 +22,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .menu-grid button{background:#182534;border:1px solid #9ab7d221;border-radius:7px;text-align:left;padding:17px}
 small{display:block;font-size:10px;color:#8290a1;margin-top:6px}
 .help{color:#8290a1;font-size:11px;line-height:1.6;margin:22px 0 0}
-.app-footer{position:fixed;z-index:10;right:0;bottom:0;left:0;display:grid;min-height:36px;place-items:center;padding:8px 12px;background:#07121e;color:#a7bece;font-size:11px;text-align:center;pointer-events:none}
+.app-footer{position:fixed;z-index:10;right:0;bottom:0;left:0;display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:.4em;white-space:nowrap;min-height:36px;padding:8px 12px;background:#07121e;color:#a7bece;font-size:11px;text-align:center;pointer-events:none}
 .panel{width:min(100%,700px)}
 .back{border:0;background:none;color:#8290a1;padding:0;margin-bottom:20px;font-size:11px}
 h1{font-size:30px;margin:8px 0}
