@@ -142,7 +142,7 @@ export default function App () {
       {error && <div className='notice' role='alert'>{error}</div>}
       {screen === 'menu' && (
         <section className='card menu'>
-          <div className='brand'><img src='/logo.svg' alt='Movebox' width='220' height='48' /></div>
+          <div className='brand'><img src='/logo.svg' alt='Movebox' width='220' height='48' fetchPriority='high' /></div>
           <p className='eyebrow centered'>CLÁSSICO SOKOBAN</p>
           <div className='progress-label'><span>Fases concluídas</span><strong>{completed} / {playable}</strong></div>
           <div className='progress'><span style={{ width: `${completed / playable * 100}%` }} /></div>
